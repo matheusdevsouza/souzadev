@@ -74,23 +74,30 @@ export function PortfolioPage() {
           <HeroSection />
           <div className="mx-auto max-w-6xl flex flex-col gap-32 pb-24 pt-32">
             <ServicesSection />
-          <ProjectsSection />
-          <ProcessSection />
-          <TechnologiesSection />
+            <ProjectsSection />
+            <ProcessSection />
+            <TechnologiesSection />
             <ContactSection
-            formData={formData}
-            handleChange={handleChange}
-            handleSubmit={handleSubmit}
-            feedback={feedback}
-            status={status}
-          />
+              formData={formData}
+              handleChange={handleChange}
+              handleSubmit={handleSubmit}
+              feedback={feedback}
+              status={status}
+            />
           </div>
         </main>
-        <footer className="border-t border-white/10 py-24 overflow-hidden">
-          <div className="w-full flex items-center justify-center">
-            <h2 className="font-display text-[15vw] leading-none select-none pointer-events-none relative whitespace-nowrap text-white/20">
-              SOUZA DEV
-              <span className="absolute top-4 -right-12 lg:-right-20 text-[3vw] text-white/20 font-sans">©</span>
+        
+        <div className="absolute bottom-0 left-0 right-0 pointer-events-none overflow-visible" style={{ height: '100vh', zIndex: 1 }}>
+          <div className="absolute bottom-24 left-1/2 -translate-x-1/2 w-[50vw] h-[50vw] bg-accent/5 blur-[150px] rounded-full opacity-50" />
+        </div>
+        
+        <footer className="relative py-24 overflow-visible z-10">
+          <div className="w-full flex items-center justify-center relative">
+            <h2 className="font-display text-[15vw] leading-none select-none pointer-events-none relative whitespace-nowrap">
+              <span className="bg-gradient-to-r from-[#9932cc]/30 via-[#8a2be2]/25 to-[#9932cc]/30 bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(138,43,226,0.4)] filter">
+                SOUZA DEV
+              </span>
+              <span className="absolute top-4 -right-12 lg:-right-20 text-[3vw] bg-gradient-to-br from-[#8a2be2]/30 to-[#9932cc]/20 bg-clip-text text-transparent font-sans drop-shadow-[0_0_20px_rgba(138,43,226,0.3)]">©</span>
             </h2>
           </div>
         </footer>
@@ -126,11 +133,10 @@ function Header() {
             <a
               key={item.href}
               href={item.href}
-              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${
-                index === 0
-                  ? "bg-gradient-to-r from-accent/20 to-accent-strong/20 text-white"
-                  : "text-lavender/80 hover:bg-white/5 hover:text-white"
-              }`}
+              className={`flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-all ${index === 0
+                ? "bg-gradient-to-r from-accent/20 to-accent-strong/20 text-white"
+                : "text-lavender/80 hover:bg-white/5 hover:text-white"
+                }`}
             >
               <IconSwitcher name={item.icon} size={16} />
               <span>{item.label}</span>
@@ -152,8 +158,6 @@ function Header() {
 
 function HeroSection() {
   const sectionRef = useRef<HTMLElement>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const contentRef = useRef<HTMLDivElement>(null);
   const glowLeftRef = useRef<HTMLDivElement>(null);
   const glowRightRef = useRef<HTMLDivElement>(null);
   const glowTopRef = useRef<HTMLDivElement>(null);
@@ -161,36 +165,6 @@ function HeroSection() {
   const glowBottomCenterRef = useRef<HTMLDivElement>(null);
 
   useGSAP(() => {
-    if (wrapperRef.current) {
-      gsap.set(wrapperRef.current, { willChange: "transform, filter, opacity" });
-    }
-
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top top",
-        end: "+=800", 
-        scrub: 1, 
-        pin: true, 
-        pinSpacing: true, 
-      }
-    });
-
-    tl.to(wrapperRef.current, {
-      scale: 1.25, 
-      filter: "blur(12px)", 
-      opacity: 0, 
-      ease: "power2.inOut",
-    }, "start");
-
-    tl.to(contentRef.current, {
-      y: -150, 
-      scale: 1.1, 
-      opacity: 0, 
-      filter: "blur(8px)",
-      ease: "power2.in",
-    }, "start"); 
-
     const glows = [
       glowLeftRef.current,
       glowRightRef.current,
@@ -230,10 +204,10 @@ function HeroSection() {
       data-hero
       style={{ paddingTop: 'calc(73px + 6rem)' }}
     >
-      <div ref={wrapperRef} className="absolute inset-0 w-full h-full origin-center will-change-transform">
-        
+      <div className="absolute inset-0 w-full h-full">
+
         <AnimatedBackgroundGrid />
-        
+
         <div className="pointer-events-none absolute inset-0 -z-10">
           <Image
             src=""
@@ -252,12 +226,12 @@ function HeroSection() {
         </div>
 
         <div className="relative z-10 w-full h-full px-16 lg:px-24 xl:px-32 flex items-center justify-center">
-          
+
           <div className="absolute right-0 top-1/2 -translate-y-1/2 w-full sm:w-[70%] md:w-[60%] lg:w-[50%] h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[700px] pointer-events-auto opacity-50 sm:opacity-70 md:opacity-100">
             <HeroPlanet />
           </div>
-          
-          <div ref={contentRef} className="relative z-10 space-y-8 lg:space-y-10 overflow-visible max-w-3xl w-full mr-auto">
+
+          <div className="relative z-10 space-y-8 lg:space-y-10 overflow-visible max-w-3xl w-full mr-auto">
             <div className="space-y-6">
               <h1 className="hero-line font-display font-extrabold text-4xl leading-[1.1] text-white md:text-5xl lg:text-6xl xl:text-7xl max-w-3xl">
                 <span className="block">
@@ -520,13 +494,12 @@ function ContactSection({ formData, handleChange, handleSubmit, feedback, status
             </button>
             {feedback && (
               <p
-                className={`text-center text-sm ${
-                  status === "error"
-                    ? "text-red-400"
-                    : status === "success"
-                      ? "text-green-400"
-                      : "text-lavender/80"
-                }`}
+                className={`text-center text-sm ${status === "error"
+                  ? "text-red-400"
+                  : status === "success"
+                    ? "text-green-400"
+                    : "text-lavender/80"
+                  }`}
               >
                 {feedback}
               </p>
