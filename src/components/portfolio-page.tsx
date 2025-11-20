@@ -72,7 +72,7 @@ export function PortfolioPage() {
         <Header />
         <main className="flex flex-col -mt-0">
           <HeroSection />
-          <div className="mx-auto max-w-6xl flex flex-col gap-32 pb-24 pt-32">
+          <div className="relative z-10 mx-auto max-w-6xl flex flex-col gap-32 pb-24 pt-32">
             <ServicesSection />
             <ProjectsSection />
             <ProcessSection />
@@ -206,32 +206,34 @@ function HeroSection() {
     >
       <div className="absolute inset-0 w-full h-full">
 
-        <AnimatedBackgroundGrid />
+        <div data-hero-background className="absolute inset-0 w-full h-full">
+          <AnimatedBackgroundGrid />
 
-        <div className="pointer-events-none absolute inset-0 -z-10">
-          <Image
-            src=""
-            alt=""
-            fill
-            className="object-cover opacity-30"
-            priority
-            quality={90}
-          />
-          <div className="absolute inset-0 bg-primary/60" />
-          <div ref={glowLeftRef} className="absolute left-[8%] top-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/20 blur-[120px] rounded-full pointer-events-none mix-blend-screen opacity-100" />
-          <div ref={glowRightRef} className="absolute right-[23%] top-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-accent/20 blur-[100px] rounded-full pointer-events-none mix-blend-screen opacity-100" />
-          <div ref={glowTopRef} className="absolute left-[40%] top-[10%] w-[200px] h-[200px] bg-accent/15 blur-[80px] rounded-full pointer-events-none mix-blend-screen opacity-100" />
-          <div ref={glowBottomLeftRef} className="absolute left-[5%] bottom-[10%] w-[350px] h-[350px] bg-accent/10 blur-[100px] rounded-full pointer-events-none mix-blend-screen opacity-100" />
-          <div ref={glowBottomCenterRef} className="absolute left-1/2 -translate-x-1/2 bottom-[-10%] w-[600px] h-[300px] bg-accent/10 blur-[120px] rounded-full pointer-events-none mix-blend-screen opacity-100" />
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <Image
+              src=""
+              alt=""
+              fill
+              className="object-cover opacity-30"
+              priority
+              quality={90}
+            />
+            <div className="absolute inset-0 bg-primary/60" />
+            <div ref={glowLeftRef} className="absolute left-[8%] top-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/20 blur-[120px] rounded-full pointer-events-none mix-blend-screen opacity-100" />
+            <div ref={glowRightRef} className="absolute right-[23%] top-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-accent/20 blur-[100px] rounded-full pointer-events-none mix-blend-screen opacity-100" />
+            <div ref={glowTopRef} className="absolute left-[40%] top-[10%] w-[200px] h-[200px] bg-accent/15 blur-[80px] rounded-full pointer-events-none mix-blend-screen opacity-100" />
+            <div ref={glowBottomLeftRef} className="absolute left-[5%] bottom-[10%] w-[350px] h-[350px] bg-accent/10 blur-[100px] rounded-full pointer-events-none mix-blend-screen opacity-100" />
+            <div ref={glowBottomCenterRef} className="absolute left-1/2 -translate-x-1/2 bottom-[-10%] w-[600px] h-[300px] bg-accent/10 blur-[120px] rounded-full pointer-events-none mix-blend-screen opacity-100" />
+          </div>
         </div>
 
         <div className="relative z-10 w-full h-full px-16 lg:px-24 xl:px-32 flex items-center justify-center">
 
-          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-full sm:w-[70%] md:w-[60%] lg:w-[50%] h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[700px] pointer-events-auto opacity-50 sm:opacity-70 md:opacity-100">
+          <div className="hero-planet-container absolute right-0 top-1/2 -translate-y-1/2 w-full sm:w-[70%] md:w-[60%] lg:w-[50%] h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[700px] pointer-events-auto opacity-50 sm:opacity-70 md:opacity-100">
             <HeroPlanet />
           </div>
 
-          <div className="relative z-10 space-y-8 lg:space-y-10 overflow-visible max-w-3xl w-full mr-auto">
+          <div data-hero-content className="relative z-10 space-y-8 lg:space-y-10 overflow-visible max-w-3xl w-full mr-auto">
             <div className="space-y-6">
               <h1 className="hero-line font-display font-extrabold text-4xl leading-[1.1] text-white md:text-5xl lg:text-6xl xl:text-7xl max-w-3xl">
                 <span className="block">
