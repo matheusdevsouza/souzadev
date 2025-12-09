@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -11,7 +11,10 @@ gsap.registerPlugin(ScrollTrigger, useGSAP);
 import { IconSwitcher } from "@/components/ui/icon-switcher";
 import { usePortfolioAnimations } from "@/hooks/use-portfolio-animations";
 import { HeroPlanet } from "@/components/hero-planet";
-import { AnimatedBackgroundGrid } from "@/components/ui/animated-background-grid";
+import { PixelCanvas } from "@/components/ui/pixel-canvas";
+import { NoiseTransitionBackground } from "@/components/noise-transition-background";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { GradientSlider } from "@/components/gradient-slider";
 
 type ContactFormState = {
   name: string;
@@ -28,10 +31,23 @@ const initialForm: ContactFormState = {
 };
 
 export function PortfolioPage() {
+  const [isLoading, setIsLoading] = useState(true);
   usePortfolioAnimations();
   const [formData, setFormData] = useState<ContactFormState>(initialForm);
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [feedback, setFeedback] = useState("");
+
+  const handleLoadingComplete = () => {
+    setIsLoading(false);
+  };
+
+  const handleProjectsComplete = useCallback(() => {
+    // Scroll suave para a próxima seção
+    const nextSection = document.getElementById('processo');
+    if (nextSection) {
+      nextSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, []);
 
   const handleChange = (field: keyof ContactFormState) => (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData((prev) => ({ ...prev, [field]: event.target.value }));
@@ -65,14 +81,15 @@ export function PortfolioPage() {
 
   return (
     <div className="relative min-h-screen">
+      {isLoading && <LoadingSpinner onComplete={handleLoadingComplete} />}
 
-      <div className="relative z-20">
-        <Header />
+      <div className={`relative z-20 transition-opacity duration-500 ${isLoading ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+        <Header isLoading={isLoading} />
         <main className="flex flex-col -mt-0">
-          <HeroSection />
-          <div className="relative z-10 mx-auto max-w-6xl flex flex-col gap-32 pb-24 pt-32">
+          <HeroSection isLoading={isLoading} />
+          <div className="relative z-10 flex flex-col gap-32 pb-24 pt-32">
             <ServicesSection />
-            <ProjectsSection />
+            <GradientSlider onComplete={handleProjectsComplete} />
             <ProcessSection />
             <TechnologiesSection />
             <ContactSection
@@ -104,7 +121,8 @@ export function PortfolioPage() {
   );
 }
 
-function Header() {
+function Header({ isLoading }: { isLoading: boolean }) {
+  const headerRef = useRef<HTMLElement>(null);
   const navItems = [
     { href: "#hero", label: "Início", icon: "sparkle" },
     { href: "#servicos", label: "Serviços", icon: "buildings" },
@@ -113,8 +131,27 @@ function Header() {
     { href: "#contato", label: "Contato", icon: "envelope-simple" },
   ];
 
+  // Animações de entrada do header
+  useGSAP(() => {
+    if (isLoading) {
+      gsap.set(headerRef.current, {
+        opacity: 0,
+        y: -20
+      });
+      return;
+    }
+
+    gsap.to(headerRef.current, {
+      opacity: 1,
+      y: 0,
+      duration: 0.8,
+      ease: "power3.out",
+      delay: 0.2
+    });
+  }, { scope: headerRef, dependencies: [isLoading] });
+
   return (
-    <header className="fixed top-0 w-full z-30 bg-transparent">
+    <header ref={headerRef} className="fixed top-0 w-full z-30 bg-transparent">
       <div className="flex w-full items-center justify-between gap-4 px-16 py-4 lg:px-24 xl:px-32">
         <a href="#hero" className="flex items-center transition-transform duration-300 ease-out hover:scale-110">
           <Image
@@ -154,45 +191,155 @@ function Header() {
   );
 }
 
-function HeroSection() {
+function HeroSection({ isLoading }: { isLoading: boolean }) {
   const sectionRef = useRef<HTMLElement>(null);
   const glowLeftRef = useRef<HTMLDivElement>(null);
   const glowRightRef = useRef<HTMLDivElement>(null);
   const glowTopRef = useRef<HTMLDivElement>(null);
   const glowBottomLeftRef = useRef<HTMLDivElement>(null);
   const glowBottomCenterRef = useRef<HTMLDivElement>(null);
+  const [triggerNoiseTransition, setTriggerNoiseTransition] = useState(false);
+  const hasTriggeredInitialTransition = useRef(false);
+  const isInitialLoad = useRef(true);
+  const glowsAnimated = useRef(false);
+  const textsAnimated = useRef(false);
 
+  // Animações dos glows - executar apenas uma vez, DEPOIS do loading
   useGSAP(() => {
+    if (glowsAnimated.current || isLoading) return; // Esperar loading terminar
+
     const glows = [
       glowLeftRef.current,
       glowRightRef.current,
       glowTopRef.current,
       glowBottomLeftRef.current,
       glowBottomCenterRef.current
-    ];
+    ].filter(Boolean); // Remove nulls
 
-    gsap.from(glows, {
+    if (glows.length > 0) {
+      gsap.from(glows, {
+        opacity: 0,
+        scale: 0.5,
+        duration: 2.5,
+        ease: "power2.out",
+        stagger: 0.2,
+      });
+
+      glows.forEach((glow, i) => {
+        if (!glow) return;
+        gsap.to(glow, {
+          opacity: 0.8,
+          scale: 1.1 + (i % 2) * 0.1,
+          duration: 3 + i,
+          repeat: -1,
+          yoyo: true,
+          ease: "sine.inOut",
+          delay: 2 + i * 0.5,
+        });
+      });
+
+      glowsAnimated.current = true;
+    }
+  }, { scope: sectionRef, dependencies: [isLoading] });
+
+  // Animações de entrada dos textos quando a página carrega
+  // SÓ EXECUTA quando o loading terminar
+  useGSAP(() => {
+    if (textsAnimated.current || isLoading) return; // Esperar loading terminar
+
+    // Configurar estado inicial (escondidos)
+    gsap.set("[data-hero-content]", {
       opacity: 0,
-      scale: 0.5,
-      duration: 2.5,
-      ease: "power2.out",
-      stagger: 0.2,
+      y: 50,
+      scale: 0.9,
+      filter: "blur(10px)"
     });
 
-    glows.forEach((glow, i) => {
-      if (!glow) return;
-      gsap.to(glow, {
-        opacity: 0.8,
-        scale: 1.1 + (i % 2) * 0.1,
-        duration: 3 + i,
-        repeat: -1,
-        yoyo: true,
-        ease: "sine.inOut",
-        delay: 2 + i * 0.5,
+    gsap.set(".hero-line", {
+      opacity: 0,
+      y: 60,
+      x: -30,
+      scale: 0.95,
+      filter: "blur(8px)"
+    });
+
+    gsap.set(".hero-stats-item", {
+      opacity: 0,
+      x: -40,
+      y: 20,
+      scale: 0.8,
+      rotation: -5,
+      filter: "blur(6px)"
+    });
+
+    // Animar entrada do conteúdo principal
+    gsap.to("[data-hero-content]", {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+      duration: 1.2,
+      ease: "power3.out",
+      delay: 0.3
+    });
+
+    // Animar entrada das linhas de texto (com stagger)
+    const heroLines = gsap.utils.toArray<HTMLElement>(".hero-line");
+    heroLines.forEach((line, i) => {
+      gsap.to(line, {
+        opacity: 1,
+        y: 0,
+        x: 0,
+        scale: 1,
+        filter: "blur(0px)",
+        duration: 1.0,
+        ease: "power4.out",
+        delay: 0.5 + i * 0.15
       });
     });
 
-  }, { scope: sectionRef });
+    // Animar entrada dos stats (com stagger)
+    const heroStats = gsap.utils.toArray<HTMLElement>(".hero-stats-item");
+    heroStats.forEach((stat, i) => {
+      gsap.to(stat, {
+        opacity: 1,
+        x: 0,
+        y: 0,
+        scale: 1,
+        rotation: 0,
+        filter: "blur(0px)",
+        duration: 0.9,
+        ease: "back.out(1.4)",
+        delay: 0.7 + i * 0.12
+      });
+    });
+
+    textsAnimated.current = true;
+  }, { scope: sectionRef, dependencies: [isLoading] });
+
+
+  // Disparar transição quando o loading terminar
+  useEffect(() => {
+    if (!isLoading && !hasTriggeredInitialTransition.current) {
+      // Iniciar transição quando loading terminar
+      setTriggerNoiseTransition(true);
+      hasTriggeredInitialTransition.current = true;
+    }
+  }, [isLoading]);
+
+  // Callback quando a transição terminar
+  const handleTransitionComplete = () => {
+    setTriggerNoiseTransition(false);
+    
+    // Se for a transição inicial, não fazer nada aqui
+    // Os elementos já estarão animando junto com o notebook
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+    }
+  };
+
+  // REMOVIDO: canAnimateElements não é mais necessário
+  // A timeline do ScrollTrigger controla tudo agora
 
   return (
     <section
@@ -205,9 +352,12 @@ function HeroSection() {
       <div className="absolute inset-0 w-full h-full">
 
         <div data-hero-background className="absolute inset-0 w-full h-full">
-          <AnimatedBackgroundGrid />
+          <NoiseTransitionBackground 
+            triggerTransition={triggerNoiseTransition}
+            onTransitionComplete={handleTransitionComplete}
+          />
 
-          <div className="pointer-events-none absolute inset-0 -z-10">
+          <div className="pointer-events-none absolute inset-0" style={{ zIndex: 0 }}>
             <Image
               src=""
               alt=""
@@ -228,10 +378,13 @@ function HeroSection() {
         <div className="relative z-10 w-full h-full px-16 lg:px-24 xl:px-32 flex items-center justify-center">
 
           <div className="hero-planet-container absolute right-0 top-1/2 -translate-y-1/2 w-full sm:w-[70%] md:w-[60%] lg:w-[50%] h-[300px] sm:h-[400px] md:h-[500px] lg:h-[600px] xl:h-[700px] pointer-events-auto opacity-50 sm:opacity-70 md:opacity-100">
-            <HeroPlanet />
+            <HeroPlanet onInteractionEnd={() => setTriggerNoiseTransition(true)} />
           </div>
 
-          <div data-hero-content className="relative z-10 space-y-8 lg:space-y-10 overflow-visible max-w-3xl w-full mr-auto">
+          <div 
+            data-hero-content 
+            className="relative z-10 space-y-8 lg:space-y-10 overflow-visible max-w-3xl w-full mr-auto"
+          >
             <div className="space-y-6">
               <h1 className="hero-line font-display font-extrabold text-4xl leading-[1.1] text-white md:text-5xl lg:text-6xl xl:text-7xl max-w-3xl">
                 <span className="block">
@@ -264,7 +417,7 @@ function HeroSection() {
 
             <div className="hero-line flex gap-8 pt-4">
               {heroStats.slice(0, 2).map((stat) => (
-                <div key={stat.label} className="flex items-center gap-3">
+                <div key={stat.label} className="hero-stats-item flex items-center gap-3">
                   <div className="rounded-xl border border-accent/30 bg-accent/10 p-3">
                     <IconSwitcher
                       name={stat.label.includes("Projetos") ? "shopping-bag" : "users"}
@@ -286,73 +439,52 @@ function HeroSection() {
   );
 }
 
+function ServiceCard({ service }: { service: typeof services[0] }) {
+  const [isHovered, setIsHovered] = useState(false);
+
+  return (
+    <article
+      data-service-card
+      className="card-hover relative h-full rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-6 backdrop-blur overflow-hidden"
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <PixelCanvas 
+        gap={6} 
+        speed={25}
+        isHovered={isHovered}
+        colors={[
+          "rgba(138, 43, 226, 0.6)",
+          "rgba(153, 50, 204, 0.5)",
+          "rgba(147, 112, 219, 0.4)",
+          "rgba(186, 85, 211, 0.5)",
+          "rgba(218, 112, 214, 0.4)"
+        ]}
+      />
+      <div className="relative z-20">
+        <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border border-accent/50 bg-accent/10 text-accent">
+          <IconSwitcher name={service.icon} size={24} />
+        </div>
+        <h3 className="font-display text-2xl text-white">{service.title}</h3>
+        <p className="mt-3 text-lavender/90">{service.description}</p>
+      </div>
+    </article>
+  );
+}
+
 function ServicesSection() {
   return (
-    <section id="servicos" className="space-y-12">
-      <div className="space-y-3">
+    <section id="servicos" className="space-y-12 px-8 md:px-16 lg:px-24 xl:px-32">
+      <div className="space-y-3 max-w-7xl mx-auto">
         <p className="text-xs uppercase tracking-[0.4em] text-lavender/70">Serviços</p>
         <h2 className="font-display text-4xl text-white">Experiências que elevam marcas.</h2>
         <p className="text-lg text-lavender/90">
           Cada projeto nasce com imersão estratégica, dados e foco em performance. Combino design de alto impacto, storytelling e tecnologia de ponta para entregar jornadas completas.
         </p>
       </div>
-      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3 max-w-7xl mx-auto">
         {services.map((service) => (
-          <article
-            key={service.title}
-            data-service-card
-            className="card-hover h-full rounded-3xl border border-white/10 bg-gradient-to-br from-white/5 to-transparent p-6 backdrop-blur"
-          >
-            <div className="mb-5 grid h-12 w-12 place-items-center rounded-2xl border border-accent/50 bg-accent/10 text-accent">
-              <IconSwitcher name={service.icon} size={24} />
-            </div>
-            <h3 className="font-display text-2xl text-white">{service.title}</h3>
-            <p className="mt-3 text-lavender/90">{service.description}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function ProjectsSection() {
-  return (
-    <section id="projetos" className="space-y-12">
-      <div
-        id="projects-pin"
-        className="glass-panel rounded-3xl border border-white/10 p-8"
-      >
-        <p className="text-xs uppercase tracking-[0.4em] text-lavender/70">Projetos em destaque</p>
-        <h2 className="mt-3 font-display text-4xl text-white">Galeria interativa.</h2>
-        <p className="mt-4 text-lg text-lavender/90">
-          Pinning inteligente para destacar cada case com parallax controlado. Imersão visual com foco em storytelling e métricas reais.
-        </p>
-      </div>
-      <div className="projects-grid grid gap-10 md:grid-cols-2">
-        {projects.map((project) => (
-          <figure
-            key={project.title}
-            data-project-card
-            className="card-hover overflow-hidden rounded-3xl border border-white/5 bg-white/5"
-          >
-            <div className="aspect-[4/3] overflow-hidden">
-              <Image
-                src={project.image}
-                alt={project.title}
-                width={900}
-                height={675}
-                className="h-full w-full object-cover transition duration-[1500ms] ease-[cubic-bezier(0.19,1,0.22,1)]"
-                sizes="(min-width: 768px) 45vw, 100vw"
-              />
-            </div>
-            <figcaption className="flex items-center justify-between p-6">
-              <div>
-                <p className="text-lg font-semibold text-white">{project.title}</p>
-                <p className="text-sm text-lavender/80">{project.result}</p>
-              </div>
-              <IconSwitcher name="arrow-out" size={26} className="text-accent" />
-            </figcaption>
-          </figure>
+          <ServiceCard key={service.title} service={service} />
         ))}
       </div>
     </section>
@@ -361,12 +493,12 @@ function ProjectsSection() {
 
 function ProcessSection() {
   return (
-    <section id="processo" className="space-y-10">
-      <div>
+    <section id="processo" className="space-y-10 px-8 md:px-16 lg:px-24 xl:px-32">
+      <div className="max-w-6xl mx-auto">
         <p className="text-xs uppercase tracking-[0.4em] text-lavender/70">Como eu trabalho</p>
         <h2 className="font-display text-4xl text-white">Processo end-to-end.</h2>
       </div>
-      <div className="space-y-8">
+      <div className="space-y-8 max-w-6xl mx-auto">
         {processSteps.map((step, index) => (
           <article
             key={step.title}
@@ -389,12 +521,12 @@ function ProcessSection() {
 
 function TechnologiesSection() {
   return (
-    <section id="tecnologias" className="space-y-10">
-      <div>
+    <section id="tecnologias" className="space-y-10 px-8 md:px-16 lg:px-24 xl:px-32">
+      <div className="max-w-6xl mx-auto">
         <p className="text-xs uppercase tracking-[0.4em] text-lavender/70">Tecnologias</p>
         <h2 className="font-display text-4xl text-white">Stack dominada.</h2>
       </div>
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4 max-w-7xl mx-auto">
         {technologies.map((tech) => (
           <div
             key={tech.label}
@@ -422,15 +554,15 @@ type ContactSectionProps = {
 
 function ContactSection({ formData, handleChange, handleSubmit, feedback, status }: ContactSectionProps) {
   return (
-    <section id="contato" className="space-y-10">
-      <div>
+    <section id="contato" className="space-y-10 px-8 md:px-16 lg:px-24 xl:px-32">
+      <div className="max-w-6xl mx-auto">
         <p className="text-xs uppercase tracking-[0.4em] text-lavender/70">Contato</p>
         <h2 className="font-display text-4xl text-white">Vamos cocriar algo grande.</h2>
         <p className="text-lg text-lavender/90">
           Envie uma mensagem ou fale diretamente via WhatsApp. Retorno em até 24h úteis.
         </p>
       </div>
-      <div className="grid gap-10 lg:grid-cols-2">
+      <div className="grid gap-10 lg:grid-cols-2 max-w-6xl mx-auto">
         <form
           onSubmit={handleSubmit}
           className="rounded-3xl border border-white/10 bg-primary/70 p-8 shadow-card"

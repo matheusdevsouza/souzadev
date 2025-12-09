@@ -34,6 +34,7 @@ const iconMap = {
   briefing: Lightbulb,
   design: Sparkle,
   desenvolvimento: Code,
+  code: Code,
   lancamento: RocketLaunch,
   buildings: Buildings,
   "shopping-cart": ShoppingCart,

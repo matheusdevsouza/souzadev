@@ -6,7 +6,11 @@ import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import gsap from "gsap";
 
-export function HeroPlanet() {
+interface HeroPlanetProps {
+  onInteractionEnd?: () => void;
+}
+
+export function HeroPlanet({ onInteractionEnd }: HeroPlanetProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const sceneRef = useRef<THREE.Scene | null>(null);
   const rendererRef = useRef<THREE.WebGLRenderer | null>(null);
@@ -81,6 +85,9 @@ export function HeroPlanet() {
     const handleEnd = () => {
       isInteractingRef.current = false;
       isResettingRef.current = true;
+
+      // Trigger noise transition IMEDIATAMENTE quando o usuário larga o notebook
+      onInteractionEnd?.();
 
       const targetDistance = INITIAL_CAMERA_POS.distanceTo(NOTEBOOK_TARGET);
       

@@ -9,23 +9,50 @@ export function usePortfolioAnimations() {
     gsap.registerPlugin(ScrollTrigger);
     const ctx = gsap.context(() => {
       const SHOW_MARKERS = false;
+      // Timeline principal da hero - controla TUDO com scrub (igual ao notebook)
+      // NOTA: Os textos começam visíveis (animados pela HeroSection no carregamento)
+      // Esta timeline apenas controla a saída quando o usuário scrolla
       const tlHero = gsap.timeline({
         scrollTrigger: {
           trigger: "#hero",
           start: "top top",
           end: "bottom top", 
-          scrub: 1,
+          scrub: 1,  // Anima suavemente conforme o scroll
           pin: true,
           pinSpacing: false,
           markers: SHOW_MARKERS,
         }
       });
 
+      // Animações de PROFUNDIDADE para os textos - EXATAMENTE como o notebook
+      // Os textos começam visíveis e vão sumindo conforme scroll
+      // Efeito: scale diminui, move para baixo e para trás, blur aumenta, opacity diminui
+      
       tlHero.to("[data-hero-content]", {
-        y: -150,
-        opacity: 0,
-        scale: 0.95,
-        filter: "blur(10px)",
+        y: 100,        // Move para baixo (mesmo sentido do notebook)
+        opacity: 0,    // Fade out
+        scale: 0.6,    // Zoom out (MESMO scale do notebook)
+        filter: "blur(10px)",  // Blur aumenta
+        duration: 1,
+        ease: "power2.inOut"
+      }, 0);
+
+      tlHero.to(".hero-line", {
+        y: 100,        // Move para baixo (mesmo sentido do notebook)
+        x: -50,        // Move para trás/esquerda (mesmo sentido do notebook)
+        opacity: 0,    // Fade out
+        scale: 0.6,    // Zoom out (MESMO scale do notebook)
+        filter: "blur(8px)",   // Blur aumenta
+        duration: 1,
+        ease: "power2.inOut"
+      }, 0);
+
+      tlHero.to(".hero-stats-item", {
+        y: 100,        // Move para baixo (mesmo sentido do notebook)
+        x: -50,        // Move para trás/esquerda (mesmo sentido do notebook)
+        opacity: 0,    // Fade out
+        scale: 0.6,    // Zoom out (MESMO scale do notebook)
+        filter: "blur(5px)",   // Blur aumenta (mesmo do notebook)
         duration: 1,
         ease: "power2.inOut"
       }, 0);
